@@ -603,6 +603,26 @@ app.post('/api/settings', (req, res) => {
    Stałej historii kierowców/wozów nie kasujemy.
    ========================================================= */
 
+app.patch('/api/drivers/:id', (req, res) => {
+  const active = req.body.active ? 1 : 0;
+
+  const result = db.prepare(
+    'UPDATE drivers SET active=? WHERE id=?'
+  ).run(active, req.params.id);
+
+  if (!result.changes) {
+    return res.status(404).json({
+      error: 'Nie znaleziono kierowcy'
+    });
+  }
+
+  audit(
+    active ? 'AKTYWOWANO KIEROWCĘ' : 'DEZAKTYWOWANO KIEROWCĘ',
+    'ID kierowcy: ' + req.params.id
+  );
+
+  res.json({ ok: true });
+});
 app.delete('/api/:table/:id', (req, res) => {
     const allowed = [
         'services',
